@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import MainScreen from './screens/MainScreen/MainScreen';
 import RecordScreen from './screens/RecordScreen/RecordScreen';
 import NameInputScreen from './screens/NameInputScreen/NameInputScreen';
+import GenerateScreen from './screens/GenerateScreen/GenerateScreen';
 
 const Stack = createStackNavigator();
 
@@ -17,6 +18,7 @@ function App() {
         }}
       >
         <Stack.Screen name="Main" component={MainScreen} />
+        <Stack.Screen name="Generate" component={GenerateScreen} />
         <Stack.Screen name="NameInput" component={NameInputScreen} />
         <Stack.Screen name="Record" component={RecordScreen} />
       </Stack.Navigator>

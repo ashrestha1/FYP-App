@@ -18,9 +18,9 @@ const MainScreen = ({ navigation }) => {
         <View style={styles.container}>
           <Pressable
             style={[styles.button, { backgroundColor: '#171A20CC' }]}
-            onPress={() => navigation.navigate('Record')}
+            onPress={() => navigation.navigate('Generate')}
           >
-            <Text style={[styles.text, { color: '#FFFFFF' }]}>View Models</Text>
+            <Text style={[styles.text, { color: '#FFFFFF' }]}>Generate</Text>
           </Pressable>
         </View>
         <View style={styles.container}>
