@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  ImageBackground,
-  Pressable,
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
@@ -11,18 +9,12 @@ import {
   StyleSheet,
   Modal,
   FlatList,
+  Keyboard,
 } from 'react-native';
 import { Camera } from 'expo-camera';
 import { Video } from 'expo-av';
-import {
-  Container,
-  Content,
-  Header,
-  Item,
-  Icon,
-  Input,
-  Button,
-} from 'native-base';
+import axios from 'axios';
+import { Header, Icon } from 'native-base';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BlurView } from 'expo-blur';
 import { Directions } from 'react-native-gesture-handler';
@@ -46,13 +38,20 @@ const GenerateScreen = ({ navigation }) => {
   const [textBlurIntensity, setTextBlurIntensity] = useState(0);
   const [textEntered, setTextEntered] = useState(null);
   const [isHidden, setIsHidden] = React.useState('flex');
+  const [keyboardSpace, setKeyboardSpace] = useState(0);
 
   const [models, setModels] = useState([
     { title: 'Aayush Shrestha', NumOfSteps: 1000 },
     { title: 'Umakant Bhatt', NumOfSteps: 1200 },
     { title: 'Tony Robotics', NumOfSteps: 1300 },
   ]);
-
+  Keyboard.addListener('keyboardDidShow', (frames) => {
+    if (!frames.endCoordinates) return;
+    setKeyboardSpace(frames.endCoordinates.height);
+  });
+  Keyboard.addListener('keyboardDidHide', (frames) => {
+    setKeyboardSpace(0);
+  });
   useEffect(() => {
     (async () => {
       const { status } = await Camera.requestPermissionsAsync();
@@ -97,6 +96,8 @@ const GenerateScreen = ({ navigation }) => {
       }
     }
   };
+
+  const uploadFile = () => {};
 
   const stopVideoRecording = () => {
     if (cameraRef.current) {
@@ -163,7 +164,6 @@ const GenerateScreen = ({ navigation }) => {
 
   const renderTextEnterModal = () => {
     setTextModalIsVisible(true);
-    setTextBlurIntensity(100);
     setIsHidden('none');
   };
 
@@ -312,22 +312,31 @@ const GenerateScreen = ({ navigation }) => {
       </BlurView>
 
       <BlurView
-        intensity={textBlurIntensity}
-        style={[StyleSheet.absoluteFill, styles.nonBlurredContent]}
+        intensity={0}
+        style={[
+          StyleSheet.absoluteFill,
+          styles.nonBlurredContent,
+          { backgroundColor: 'green' },
+        ]}
       >
         <Modal
           animationType={'slide'}
           transparent={true}
           visible={textModalIsVisible}
         >
-          <View style={styles.TextModal}>
+          <View
+            style={[
+              styles.TextModal,
+              { marginBottom: keyboardSpace ? 500 - keyboardSpace : 10 },
+            ]}
+          >
             <TouchableOpacity
               onPress={cancelTextEnter}
               style={styles.closeButton}
             >
               <Icon name="close" style={{ color: 'black' }} />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Enter your text:</Text>
+
             <TextInput
               style={styles.input}
               placeholder="e.g. Hello World"
@@ -338,7 +347,6 @@ const GenerateScreen = ({ navigation }) => {
               style={styles.sendTextButton}
               onPress={sendTextButtonPushed}
             >
-              <Text style={styles.sendTextTitle}>Send</Text>
               <Icon
                 name="send"
                 style={{
@@ -352,6 +360,7 @@ const GenerateScreen = ({ navigation }) => {
           </View>
         </Modal>
       </BlurView>
+
       <View style={styles.container}>
         {isVideoRecording && renderVideoRecordIndicator()}
         {videoSource && renderVideoPlayer()}
@@ -378,6 +387,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     marginVertical: 6,
   },
+
   modelName: {
     fontSize: 13,
   },
@@ -387,16 +397,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   input: {
-    alignSelf: 'center',
-    borderBottomWidth: 0.3,
     borderColor: '#777',
     padding: 8,
-    margin: 10,
-    marginTop: '5%',
-    width: '100%',
-    alignContent: 'center',
-  },
 
+    width: '100%',
+  },
+  Keyboardcontainer: {
+    flex: 1,
+  },
   nonBlurredContent: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -404,13 +412,14 @@ const styles = StyleSheet.create({
   sendTextButton: {
     position: 'absolute',
     bottom: 0,
+    right: 0,
     alignItems: 'center',
     alignSelf: 'center',
     flexDirection: 'row',
     padding: 5,
     backgroundColor: 'black',
     borderRadius: 70,
-    marginBottom: 10,
+    marginBottom: 1,
   },
   sendTextTitle: {
     textAlign: 'center',
@@ -420,13 +429,12 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   TextModal: {
-    flex: 1,
-    margin: 200,
-    width: 350,
+    position: 'absolute',
+    bottom: 60,
+    width: '95%',
     backgroundColor: 'white',
-    padding: 25,
+    padding: 45,
     justifyContent: 'center',
-
     alignSelf: 'center',
     borderRadius: 4,
     borderColor: 'rgba(0, 0, 0, 0.1)',
@@ -452,17 +460,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderColor: 'rgba(0, 0, 0, 0.1)',
   },
-  modalTitle: {
-    textAlign: 'center',
 
-    fontSize: 20,
-    fontWeight: '500',
-    paddingBottom: 15,
-  },
   closeButton: {
     position: 'absolute',
-    top: 35,
-    left: 15,
+    top: 0,
+    left: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },
