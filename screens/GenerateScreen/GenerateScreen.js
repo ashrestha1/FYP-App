@@ -109,6 +109,12 @@ const GenerateScreen = ({ navigation }) => {
     console.log('hi');
     navigation.navigate('Main');
   };
+  const cancelTextEnter = () => {
+    setTextModalIsVisible(false);
+    setTextBlurIntensity(0);
+    setIsHidden('flex');
+  };
+
   const switchCamera = () => {
     if (isPreview) {
       return;
@@ -315,6 +321,12 @@ const GenerateScreen = ({ navigation }) => {
           visible={textModalIsVisible}
         >
           <View style={styles.TextModal}>
+            <TouchableOpacity
+              onPress={cancelTextEnter}
+              style={styles.closeButton}
+            >
+              <Icon name="close" style={{ color: 'black' }} />
+            </TouchableOpacity>
             <Text style={styles.modalTitle}>Enter your text:</Text>
             <TextInput
               style={styles.input}
