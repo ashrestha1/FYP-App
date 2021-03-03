@@ -10,6 +10,7 @@ import {
   Modal,
   FlatList,
   Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { Camera } from 'expo-camera';
 import { Video } from 'expo-av';
@@ -148,14 +149,13 @@ const GenerateScreen = ({ navigation }) => {
         onPress={renderTextEnterModal}
         style={[styles.openButton, { display: isHidden }]}
       >
-        <Text style={styles.confirmText}>Send</Text>
+        {/* <Text style={styles.confirmText}>Confirm</Text> */}
         <Icon
-          name="send"
+          name="checkmark-circle-outline"
           style={{
-            color: 'black',
-            fontSize: 20,
+            color: 'white',
+            fontSize: 100,
             alignSelf: 'center',
-            marginTop: 2,
           }}
         />
       </TouchableOpacity>
@@ -173,6 +173,95 @@ const GenerateScreen = ({ navigation }) => {
       shouldPlay={true}
       style={styles.media}
     />
+  );
+
+  const renderSelectModal = () => (
+    <BlurView
+      intensity={blurIntensity}
+      style={[StyleSheet.absoluteFill, styles.nonBlurredContent]}
+    >
+      <Modal animationType={'slide'} transparent={true}>
+        <View style={styles.modal}>
+          <Text style={styles.modalTitle}>List of Models available</Text>
+          <FlatList
+            data={models}
+            renderItem={({ item }) => (
+              <View style={styles.card}>
+                <View style={styles.cardContent}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setIsVisible(!isVisible);
+                      setBlurIntensity(0);
+                    }}
+                  >
+                    <Text style={styles.modelName}>{item.title}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          />
+        </View>
+      </Modal>
+    </BlurView>
+  );
+
+  const renderTextModal = () => (
+    <BlurView
+      intensity={0}
+      style={[StyleSheet.absoluteFill, styles.nonBlurredContent]}
+    >
+      <Modal animationType={'slide'} transparent={true}>
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <View style={styles.modalOverlay}>
+            {renderSendTextButton()}
+            {renderCancelTextButton()}
+          </View>
+        </TouchableWithoutFeedback>
+
+        <View
+          style={[
+            styles.TextModal,
+            { marginBottom: keyboardSpace ? 500 - keyboardSpace : 10 },
+          ]}
+        >
+          <BlurView intensity={100} style={[StyleSheet.absoluteFill]}>
+            <TextInput
+              style={styles.input}
+              multiline={true}
+              returnKeyType="done"
+              blurOnSubmit={true}
+              placeholder="e.g. Hello World"
+              onChangeText={(val) => setTextEntered(val)}
+            ></TextInput>
+          </BlurView>
+        </View>
+      </Modal>
+    </BlurView>
+  );
+
+  const renderSendTextButton = () => (
+    <TouchableOpacity
+      style={styles.sendTextButton}
+      onPress={sendTextButtonPushed}
+    >
+      <Icon
+        name="send"
+        style={{
+          color: 'white',
+          fontSize: 20,
+          alignSelf: 'center',
+        }}
+      />
+    </TouchableOpacity>
+  );
+
+  const renderCancelTextButton = () => (
+    <TouchableOpacity onPress={cancelTextEnter} style={styles.closeTextButton}>
+      <Icon
+        name="close-circle-outline"
+        style={{ color: 'white', fontSize: 30, alignSelf: 'center' }}
+      />
+    </TouchableOpacity>
   );
 
   const renderVideoRecordIndicator = () => (
@@ -283,83 +372,6 @@ const GenerateScreen = ({ navigation }) => {
           console.log('cammera error', error);
         }}
       />
-      <BlurView
-        intensity={blurIntensity}
-        style={[StyleSheet.absoluteFill, styles.nonBlurredContent]}
-      >
-        <Modal animationType={'slide'} transparent={true} visible={isVisible}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>List of Models available</Text>
-            <FlatList
-              data={models}
-              renderItem={({ item }) => (
-                <View style={styles.card}>
-                  <View style={styles.cardContent}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        setIsVisible(!isVisible);
-                        setBlurIntensity(0);
-                      }}
-                    >
-                      <Text style={styles.modelName}>{item.title}</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-            />
-          </View>
-        </Modal>
-      </BlurView>
-
-      <BlurView
-        intensity={0}
-        style={[
-          StyleSheet.absoluteFill,
-          styles.nonBlurredContent,
-          { backgroundColor: 'green' },
-        ]}
-      >
-        <Modal
-          animationType={'slide'}
-          transparent={true}
-          visible={textModalIsVisible}
-        >
-          <View
-            style={[
-              styles.TextModal,
-              { marginBottom: keyboardSpace ? 500 - keyboardSpace : 10 },
-            ]}
-          >
-            <TouchableOpacity
-              onPress={cancelTextEnter}
-              style={styles.closeButton}
-            >
-              <Icon name="close" style={{ color: 'black' }} />
-            </TouchableOpacity>
-
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Hello World"
-              onChangeText={(val) => setTextEntered(val)}
-            ></TextInput>
-
-            <TouchableOpacity
-              style={styles.sendTextButton}
-              onPress={sendTextButtonPushed}
-            >
-              <Icon
-                name="send"
-                style={{
-                  color: 'white',
-                  fontSize: 20,
-                  alignSelf: 'center',
-                  marginTop: 2,
-                }}
-              />
-            </TouchableOpacity>
-          </View>
-        </Modal>
-      </BlurView>
 
       <View style={styles.container}>
         {isVideoRecording && renderVideoRecordIndicator()}
@@ -367,6 +379,8 @@ const GenerateScreen = ({ navigation }) => {
         {isPreview && renderCancelPreviewButton()}
         {isPreview && renderConfirmPreviewButton()}
         {!videoSource && !isPreview && renderCaptureControl()}
+        {isVisible && renderSelectModal()}
+        {textModalIsVisible && renderTextModal()}
       </View>
     </SafeAreaView>
   );
@@ -397,13 +411,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   input: {
+    flex: 1,
+    alignItems: 'stretch',
+    alignContent: 'flex-start',
     borderColor: '#777',
-    padding: 8,
-
-    width: '100%',
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '500',
+    padding: 10,
   },
   Keyboardcontainer: {
     flex: 1,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   nonBlurredContent: {
     alignItems: 'center',
@@ -411,15 +436,25 @@ const styles = StyleSheet.create({
   },
   sendTextButton: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
+    bottom: 20,
+    right: 20,
     alignItems: 'center',
+    justifyContent: 'center',
     alignSelf: 'center',
-    flexDirection: 'row',
-    padding: 5,
-    backgroundColor: 'black',
+    padding: 8,
+    backgroundColor: 'rgba(1,1,1,0.5)',
     borderRadius: 70,
-    marginBottom: 1,
+  },
+  closeTextButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    padding: 5,
+    backgroundColor: 'rgba(1,1,1,0.5)',
+    borderRadius: 70,
   },
   sendTextTitle: {
     textAlign: 'center',
@@ -431,10 +466,10 @@ const styles = StyleSheet.create({
   TextModal: {
     position: 'absolute',
     bottom: 60,
-    width: '95%',
-    backgroundColor: 'white',
-    padding: 45,
-    justifyContent: 'center',
+    width: '90%',
+    height: '20%',
+    backgroundColor: 'transparent',
+    padding: 10,
     alignSelf: 'center',
     borderRadius: 4,
     borderColor: 'rgba(0, 0, 0, 0.1)',
@@ -463,22 +498,22 @@ const styles = StyleSheet.create({
 
   closeButton: {
     position: 'absolute',
-    top: 0,
-    left: 0,
+    top: 32,
+    left: 27,
     justifyContent: 'center',
     alignItems: 'center',
   },
   openButtonContainer: {
     position: 'absolute',
-    bottom: 0,
-    paddingBottom: 15,
+    bottom: 44,
+    marginLeft: 3,
+
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
   },
   openButton: {
     flexDirection: 'row',
-    backgroundColor: 'white',
     borderRadius: 20,
     padding: 5,
   },
