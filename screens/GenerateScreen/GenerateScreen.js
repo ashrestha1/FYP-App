@@ -11,6 +11,7 @@ import {
   FlatList,
   Keyboard,
   TouchableWithoutFeedback,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Camera } from 'expo-camera';
 import { Video } from 'expo-av';
@@ -217,24 +218,28 @@ const GenerateScreen = ({ navigation }) => {
             {renderCancelTextButton()}
           </View>
         </TouchableWithoutFeedback>
-
-        <View
+        <KeyboardAvoidingView
+          behavior="height"
           style={[
-            styles.TextModal,
-            { marginBottom: keyboardSpace ? 500 - keyboardSpace : 10 },
+            {
+              flex: 1,
+              marginBottom: 70,
+            },
           ]}
         >
-          <BlurView intensity={100} style={[StyleSheet.absoluteFill]}>
-            <TextInput
-              style={styles.input}
-              multiline={true}
-              returnKeyType="done"
-              blurOnSubmit={true}
-              placeholder="e.g. Hello World"
-              onChangeText={(val) => setTextEntered(val)}
-            ></TextInput>
-          </BlurView>
-        </View>
+          <View style={[styles.TextModal, {}]}>
+            <BlurView intensity={90} style={[StyleSheet.absoluteFill]}>
+              <TextInput
+                style={styles.input}
+                multiline={true}
+                returnKeyType="done"
+                blurOnSubmit={true}
+                placeholder="e.g. Hello World"
+                onChangeText={(val) => setTextEntered(val)}
+              ></TextInput>
+            </BlurView>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </BlurView>
   );
@@ -465,9 +470,9 @@ const styles = StyleSheet.create({
   },
   TextModal: {
     position: 'absolute',
-    bottom: 60,
+    bottom: 2,
     width: '90%',
-    height: '20%',
+    height: '25%',
     backgroundColor: 'transparent',
     padding: 10,
     alignSelf: 'center',
