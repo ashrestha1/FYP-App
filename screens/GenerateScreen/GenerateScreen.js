@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import {
   View,
   Text,
@@ -41,6 +42,7 @@ const GenerateScreen = ({ navigation }) => {
   const [textEntered, setTextEntered] = useState(null);
   const [isHidden, setIsHidden] = React.useState('flex');
   const [keyboardSpace, setKeyboardSpace] = useState(0);
+  const [loadingTakePic, setLoadingTakePic] = useState(false);
 
   const [models, setModels] = useState([
     { title: 'Aayush Shrestha', NumOfSteps: 1000 },
@@ -163,9 +165,30 @@ const GenerateScreen = ({ navigation }) => {
     </View>
   );
 
+  const renderircleProgressForConfirm = () => (
+    <View
+      style={[styles.openButtonContainer, { marginLeft: 0, marginBottom: 4 }]}
+    >
+      <AnimatedCircularProgress
+        style={styles.openButton}
+        size={100}
+        width={10}
+        fill={100}
+        duration={5000}
+        tintColor="#75b800"
+        onAnimationComplete={() => console.log('onAnimationComplete')}
+        backgroundColor="#3d5875"
+      />
+    </View>
+  );
+
   const renderTextEnterModal = () => {
-    setTextModalIsVisible(true);
-    setIsHidden('none');
+    setLoadingTakePic(true);
+    setTimeout(() => {
+      setLoadingTakePic(false);
+      setTextModalIsVisible(true);
+      setIsHidden('none');
+    }, 5000);
   };
 
   const renderVideoPlayer = () => (
@@ -319,6 +342,7 @@ const GenerateScreen = ({ navigation }) => {
           </View>
         </View>
       </Header>
+
       <View style={styles.control}>
         <MaterialCommunityIcons
           name="image-multiple"
@@ -383,6 +407,7 @@ const GenerateScreen = ({ navigation }) => {
         {videoSource && renderVideoPlayer()}
         {isPreview && renderCancelPreviewButton()}
         {isPreview && renderConfirmPreviewButton()}
+        {loadingTakePic && renderircleProgressForConfirm()}
         {!videoSource && !isPreview && renderCaptureControl()}
         {isVisible && renderSelectModal()}
         {textModalIsVisible && renderTextModal()}
