@@ -4,10 +4,7 @@ import styles from './styles';
 const MainScreen = ({ navigation }) => {
   return (
     <View style={styles.choiceContainer}>
-      <ImageBackground
-        source={require('../../assets/images/ModelX.jpeg')}
-        style={styles.image}
-      />
+      <ImageBackground style={styles.image} />
 
       <View style={styles.titles}>
         <Text style={styles.title}>Head Model</Text>

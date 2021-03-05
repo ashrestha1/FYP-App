@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import * as Progress from 'react-native-progress';
 import {
   View,
   Text,
@@ -21,7 +22,7 @@ import { Header, Icon } from 'native-base';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BlurView } from 'expo-blur';
 import { Directions } from 'react-native-gesture-handler';
-
+import aayushSource from '../../assets/aayushvideo/aayush.mp4';
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const closeButtonSize = Math.floor(WINDOW_HEIGHT * 0.032);
@@ -34,6 +35,7 @@ const GenerateScreen = ({ navigation }) => {
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isVideoRecording, setIsVideoRecording] = useState(false);
   const [videoSource, setVideoSource] = useState(null);
+  const [videoAayush, setVideoAayush] = useState(false);
   const cameraRef = useRef();
   const [isVisible, setIsVisible] = useState(true);
   const [textModalIsVisible, setTextModalIsVisible] = useState(false);
@@ -43,6 +45,7 @@ const GenerateScreen = ({ navigation }) => {
   const [isHidden, setIsHidden] = React.useState('flex');
   const [keyboardSpace, setKeyboardSpace] = useState(0);
   const [loadingTakePic, setLoadingTakePic] = useState(false);
+  const [loadingSendPic, setLoadingSendPic] = useState(false);
 
   const [models, setModels] = useState([
     { title: 'Aayush Shrestha', NumOfSteps: 1000 },
@@ -101,8 +104,6 @@ const GenerateScreen = ({ navigation }) => {
     }
   };
 
-  const uploadFile = () => {};
-
   const stopVideoRecording = () => {
     if (cameraRef.current) {
       setIsPreview(false);
@@ -111,8 +112,11 @@ const GenerateScreen = ({ navigation }) => {
     }
   };
   const sendTextButtonPushed = () => {
-    console.log('hi');
-    navigation.navigate('Main');
+    setLoadingSendPic(true);
+    setTimeout(() => {
+      setLoadingSendPic(false);
+      setVideoAayush(true);
+    }, 5000);
   };
   const cancelTextEnter = () => {
     setTextModalIsVisible(false);
@@ -165,7 +169,29 @@ const GenerateScreen = ({ navigation }) => {
     </View>
   );
 
-  const renderircleProgressForConfirm = () => (
+  const renderProgressBar = () => (
+    <View
+      style={{
+        flex: 1,
+        alignContent: 'center',
+        justifyContent: 'center',
+
+        alignSelf: 'center',
+      }}
+    >
+      <Progress.Bar
+        indeterminate={true}
+        indeterminateAnimationDuration={5000}
+        width={300}
+        color={'#fff'}
+        borderColor={'rgba(255, 255, 255, 0.1)'}
+        height={10}
+        borderRadius={10}
+      />
+    </View>
+  );
+
+  const renderCircleProgressForConfirm = () => (
     <View
       style={[styles.openButtonContainer, { marginLeft: 0, marginBottom: 4 }]}
     >
@@ -191,6 +217,24 @@ const GenerateScreen = ({ navigation }) => {
     }, 5000);
   };
 
+  const renderVideoAayush = () => (
+    <Video
+      source={aayushSource}
+      shouldPlay={true}
+      style={[
+        styles.media,
+        {
+          backgroundColor: 'black',
+
+          alignSelf: 'center',
+          alignContent: 'center',
+          alignItems: 'center',
+          height: '150%',
+          marginTop: -200,
+        },
+      ]}
+    />
+  );
   const renderVideoPlayer = () => (
     <Video
       source={{ uri: videoSource }}
@@ -232,7 +276,11 @@ const GenerateScreen = ({ navigation }) => {
   const renderTextModal = () => (
     <BlurView
       intensity={0}
-      style={[StyleSheet.absoluteFill, styles.nonBlurredContent]}
+      style={[
+        StyleSheet.absoluteFill,
+        styles.nonBlurredContent,
+        { borderRadius: 20 },
+      ]}
     >
       <Modal animationType={'slide'} transparent={true}>
         <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -250,7 +298,7 @@ const GenerateScreen = ({ navigation }) => {
             },
           ]}
         >
-          <View style={[styles.TextModal, {}]}>
+          <View style={[styles.TextModal]}>
             <BlurView intensity={90} style={[StyleSheet.absoluteFill]}>
               <TextInput
                 style={styles.input}
@@ -405,9 +453,11 @@ const GenerateScreen = ({ navigation }) => {
       <View style={styles.container}>
         {isVideoRecording && renderVideoRecordIndicator()}
         {videoSource && renderVideoPlayer()}
+        {videoAayush && renderVideoAayush()}
         {isPreview && renderCancelPreviewButton()}
         {isPreview && renderConfirmPreviewButton()}
-        {loadingTakePic && renderircleProgressForConfirm()}
+        {loadingTakePic && renderCircleProgressForConfirm()}
+        {loadingSendPic && renderProgressBar()}
         {!videoSource && !isPreview && renderCaptureControl()}
         {isVisible && renderSelectModal()}
         {textModalIsVisible && renderTextModal()}
@@ -496,13 +546,14 @@ const styles = StyleSheet.create({
   TextModal: {
     position: 'absolute',
     bottom: 2,
-    width: '90%',
-    height: '25%',
+    width: '80%',
+    height: '15%',
     backgroundColor: 'transparent',
     padding: 10,
     alignSelf: 'center',
-    borderRadius: 4,
+    borderRadius: 5,
     borderColor: 'rgba(0, 0, 0, 0.1)',
+    overflow: 'hidden',
   },
   modal: {
     flex: 1,
