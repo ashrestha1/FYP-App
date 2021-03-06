@@ -7,11 +7,12 @@ const styles = StyleSheet.create({
   },
   back: {
     width: '10%',
-    marginTop: '10%',
+    marginTop: '20%',
+    marginLeft: '2%',
   },
   titles: {
     width: '100%',
-    marginTop: '50%',
+    marginTop: '40%',
     alignItems: 'center',
   },
   title: {

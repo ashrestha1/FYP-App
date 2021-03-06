@@ -50,7 +50,7 @@ const GenerateScreen = ({ navigation }) => {
   const [models, setModels] = useState([
     { title: 'Aayush Shrestha', NumOfSteps: 1000 },
     { title: 'Umakant Bhatt', NumOfSteps: 1200 },
-    { title: 'Tony Robotics', NumOfSteps: 1300 },
+    { title: 'Tony Sung', NumOfSteps: 1300 },
   ]);
   Keyboard.addListener('keyboardDidShow', (frames) => {
     if (!frames.endCoordinates) return;
@@ -116,7 +116,7 @@ const GenerateScreen = ({ navigation }) => {
     setTimeout(() => {
       setLoadingSendPic(false);
       setVideoAayush(true);
-    }, 5000);
+    }, 12000);
   };
   const cancelTextEnter = () => {
     setTextModalIsVisible(false);
@@ -181,7 +181,7 @@ const GenerateScreen = ({ navigation }) => {
     >
       <Progress.Bar
         indeterminate={true}
-        indeterminateAnimationDuration={5000}
+        indeterminateAnimationDuration={12000}
         width={300}
         color={'#fff'}
         borderColor={'rgba(255, 255, 255, 0.1)'}
@@ -200,7 +200,7 @@ const GenerateScreen = ({ navigation }) => {
         size={100}
         width={10}
         fill={100}
-        duration={5000}
+        duration={3000}
         tintColor="#75b800"
         onAnimationComplete={() => console.log('onAnimationComplete')}
         backgroundColor="#3d5875"
@@ -214,7 +214,7 @@ const GenerateScreen = ({ navigation }) => {
       setLoadingTakePic(false);
       setTextModalIsVisible(true);
       setIsHidden('none');
-    }, 5000);
+    }, 3000);
   };
 
   const renderVideoAayush = () => (
@@ -267,6 +267,7 @@ const GenerateScreen = ({ navigation }) => {
                 </View>
               </View>
             )}
+            keyExtractor={(item, index) => index.toString()}
           />
         </View>
       </Modal>
@@ -576,7 +577,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderColor: 'rgba(0, 0, 0, 0.1)',
   },
-
+  modalTitle: {
+    textAlign: 'center',
+    fontSize: 18,
+    paddingBottom: 10,
+  },
   closeButton: {
     position: 'absolute',
     top: 32,

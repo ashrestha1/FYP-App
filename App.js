@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, LogBox } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import MainScreen from './screens/MainScreen/MainScreen';
@@ -10,6 +10,8 @@ import GenerateScreen from './screens/GenerateScreen/GenerateScreen';
 const Stack = createStackNavigator();
 
 function App() {
+  LogBox.ignoreAllLogs();
+
   return (
     <NavigationContainer>
       <Stack.Navigator

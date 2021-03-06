@@ -5,7 +5,9 @@ import {
   ImageBackground,
   Pressable,
   TextInput,
+  TouchableOpacity,
 } from 'react-native';
+import { Icon } from 'native-base';
 import styles from './styles';
 const NameInputScreen = ({ navigation }) => {
   const [name, setName] = React.useState();
@@ -13,12 +15,9 @@ const NameInputScreen = ({ navigation }) => {
     <View style={styles.choiceContainer}>
       <ImageBackground style={styles.image} />
       <View style={styles.back}>
-        <Pressable
-          style={[styles.button, { backgroundColor: '#171A20CC' }]}
-          onPress={() => navigation.navigate('Main')}
-        >
-          <Text style={[styles.text, { color: '#FFFFFF' }]}>Back</Text>
-        </Pressable>
+        <TouchableOpacity onPress={() => navigation.navigate('Main')}>
+          <Icon name="chevron-back-sharp" style={{ color: 'black' }} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.titles}>

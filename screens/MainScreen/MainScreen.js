@@ -7,8 +7,10 @@ const MainScreen = ({ navigation }) => {
       <ImageBackground style={styles.image} />
 
       <View style={styles.titles}>
-        <Text style={styles.title}>Head Model</Text>
-        <Text style={styles.subtitles}>Choose a model or train a new one</Text>
+        <Text style={styles.title}>Mynah</Text>
+        <Text style={styles.subtitles}>
+          An assistive tool for the speech impaired
+        </Text>
       </View>
 
       <View style={styles.buttonContainer}>
