@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import * as Progress from 'react-native-progress';
+import * as ImagePicker from 'expo-image-picker';
 import {
   View,
   Text,
@@ -14,18 +15,14 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   KeyboardAvoidingView,
+  Image,
 } from 'react-native';
 import { Camera } from 'expo-camera';
 import { Video } from 'expo-av';
-import axios from 'axios';
 import { Header, Icon } from 'native-base';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BlurView } from 'expo-blur';
-import { Directions } from 'react-native-gesture-handler';
-import aayushSource from '../../assets/aayushvideo/aayush.mp4';
 const WINDOW_HEIGHT = Dimensions.get('window').height;
-
-const closeButtonSize = Math.floor(WINDOW_HEIGHT * 0.032);
 const captureSize = Math.floor(WINDOW_HEIGHT * 0.09);
 
 const GenerateScreen = ({ navigation }) => {
@@ -41,24 +38,24 @@ const GenerateScreen = ({ navigation }) => {
   const [textModalIsVisible, setTextModalIsVisible] = useState(false);
   const [blurIntensity, setBlurIntensity] = useState(100);
   const [textBlurIntensity, setTextBlurIntensity] = useState(0);
+  const [image, setImage] = useState(null);
+  const [imageSource, setImageSource] = useState(null);
   const [textEntered, setTextEntered] = useState(null);
-  const [isHidden, setIsHidden] = React.useState('flex');
-  const [keyboardSpace, setKeyboardSpace] = useState(0);
+  const [isHiddenConfirm, setIsHiddenConfirm] = React.useState('flex');
+  const [isHiddenCancel, setIsHiddenCancel] = React.useState('flex');
   const [loadingTakePic, setLoadingTakePic] = useState(false);
   const [loadingSendPic, setLoadingSendPic] = useState(false);
+  const [videoEvaluation, setVideoEvaluation] = useState(
+    'https://desmondbucket.s3-ap-southeast-1.amazonaws.com/mykey.mp4'
+  );
+  const [isCameraOn, setIsCameraOn] = useState(true);
 
   const [models, setModels] = useState([
     { title: 'Aayush Shrestha', NumOfSteps: 1000 },
     { title: 'Umakant Bhatt', NumOfSteps: 1200 },
     { title: 'Tony Sung', NumOfSteps: 1300 },
   ]);
-  Keyboard.addListener('keyboardDidShow', (frames) => {
-    if (!frames.endCoordinates) return;
-    setKeyboardSpace(frames.endCoordinates.height);
-  });
-  Keyboard.addListener('keyboardDidHide', (frames) => {
-    setKeyboardSpace(0);
-  });
+
   useEffect(() => {
     (async () => {
       const { status } = await Camera.requestPermissionsAsync();
@@ -75,11 +72,31 @@ const GenerateScreen = ({ navigation }) => {
       const options = { quality: 0.5, base64: true, skipProcessing: true };
       const data = await cameraRef.current.takePictureAsync(options);
       const source = data.uri;
+      setImageSource(source);
       if (source) {
         await cameraRef.current.pausePreview();
         setIsPreview(true);
-        console.log('picture source', source);
+        postText();
+        console.log(videoEvaluation);
+        // uploadImage(source);
       }
+    }
+  };
+
+  const pickImage = async () => {
+    cameraRef.current.ta;
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.cancelled) {
+      const source = result.uri;
+      setImage(source);
+      setIsCameraOn(false);
+      uploadImage(source);
     }
   };
 
@@ -103,7 +120,16 @@ const GenerateScreen = ({ navigation }) => {
       }
     }
   };
-
+  const getModels = () => {
+    return fetch('http://35.229.251.43/listVoiceModels')
+      .then((response) => response.json())
+      .then((responseJson) => {
+        console.log(responseJson);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
   const stopVideoRecording = () => {
     if (cameraRef.current) {
       setIsPreview(false);
@@ -112,16 +138,22 @@ const GenerateScreen = ({ navigation }) => {
     }
   };
   const sendTextButtonPushed = () => {
+    setTextModalIsVisible(false);
+    setTextBlurIntensity(0);
+    setIsHiddenConfirm('none');
+
     setLoadingSendPic(true);
     setTimeout(() => {
       setLoadingSendPic(false);
+      setIsHiddenCancel('flex');
       setVideoAayush(true);
-    }, 12000);
+    }, 1200);
   };
   const cancelTextEnter = () => {
     setTextModalIsVisible(false);
     setTextBlurIntensity(0);
-    setIsHidden('flex');
+    setIsHiddenConfirm('flex');
+    setIsHiddenCancel('flex');
   };
 
   const switchCamera = () => {
@@ -136,6 +168,8 @@ const GenerateScreen = ({ navigation }) => {
   };
 
   const cancelPreview = async () => {
+    setVideoAayush(false);
+    setIsCameraOn(true);
     await cameraRef.current.resumePreview();
     setIsPreview(false);
     setVideoSource(null);
@@ -144,19 +178,55 @@ const GenerateScreen = ({ navigation }) => {
   const renderCancelPreviewButton = () => (
     <TouchableOpacity
       onPress={cancelPreview}
-      style={[styles.closeButton, { display: isHidden }]}
+      style={[styles.closeButton, { display: isHiddenCancel }]}
     >
       <Icon name="close" style={{ color: 'white' }} />
     </TouchableOpacity>
   );
 
+  const uploadImage = (Img) => {
+    console.log(Img);
+
+    let localUri = Img;
+    let filename = localUri.split('/').pop();
+    console.log(filename);
+    const data = new FormData();
+    data.append('file', localUri);
+    data.append('filename', 'aayush-10.jpg');
+
+    fetch('http://35.229.251.43/upload-pic', {
+      method: 'POST',
+      body: data,
+    }).then((response) => {
+      console.log('succ');
+      console.log(typeof response);
+    });
+  };
+
+  const postText = () => {
+    console.log('text');
+    const data = new FormData();
+    data.append('model', 'desmond-20');
+    data.append('text', 'Hi there yo');
+
+    fetch('http://35.229.251.43/evaluate', {
+      method: 'POST',
+      body: data,
+    }).then((response) => {
+      console.log('succ', response.text());
+      setVideoEvaluation(
+        'https://desmondbucket.s3-ap-southeast-1.amazonaws.com/mykey.mp4'
+      );
+      console.log(videoEvaluation);
+    });
+  };
+
   const renderConfirmPreviewButton = () => (
     <View style={styles.openButtonContainer}>
       <TouchableOpacity
         onPress={renderTextEnterModal}
-        style={[styles.openButton, { display: isHidden }]}
+        style={[styles.openButton, { display: isHiddenConfirm }]}
       >
-        {/* <Text style={styles.confirmText}>Confirm</Text> */}
         <Icon
           name="checkmark-circle-outline"
           style={{
@@ -213,13 +283,16 @@ const GenerateScreen = ({ navigation }) => {
     setTimeout(() => {
       setLoadingTakePic(false);
       setTextModalIsVisible(true);
-      setIsHidden('none');
+      setIsHiddenConfirm('none');
+      setIsHiddenCancel('none');
     }, 3000);
   };
 
   const renderVideoAayush = () => (
     <Video
-      source={aayushSource}
+      source={{
+        uri: 'https://desmondbucket.s3-ap-southeast-1.amazonaws.com/mykey.mp4',
+      }}
       shouldPlay={true}
       style={[
         styles.media,
@@ -243,6 +316,23 @@ const GenerateScreen = ({ navigation }) => {
     />
   );
 
+  const renderCamera = () => (
+    <Camera
+      ref={cameraRef}
+      style={styles.container}
+      type={cameraType}
+      flashMode={Camera.Constants.FlashMode.on}
+      onCameraReady={onCameraReady}
+      onMountError={(error) => {
+        console.log('cammera error', error);
+      }}
+    />
+  );
+
+  const renderImagePicker = () => (
+    <Image style={styles.container} source={{ uri: image }} />
+  );
+
   const renderSelectModal = () => (
     <BlurView
       intensity={blurIntensity}
@@ -258,6 +348,7 @@ const GenerateScreen = ({ navigation }) => {
                 <View style={styles.cardContent}>
                   <TouchableOpacity
                     onPress={() => {
+                      getModels();
                       setIsVisible(!isVisible);
                       setBlurIntensity(0);
                     }}
@@ -393,10 +484,13 @@ const GenerateScreen = ({ navigation }) => {
       </Header>
 
       <View style={styles.control}>
-        <MaterialCommunityIcons
-          name="image-multiple"
-          style={{ color: 'white', fontSize: 36 }}
-        />
+        <TouchableOpacity onPress={pickImage}>
+          <MaterialCommunityIcons
+            name="image-multiple"
+            style={{ color: 'white', fontSize: 36 }}
+          />
+        </TouchableOpacity>
+
         <View style={{ alignItems: 'center' }}>
           <TouchableOpacity
             activeOpacity={0.7}
@@ -440,26 +534,19 @@ const GenerateScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Camera
-        ref={cameraRef}
-        style={styles.container}
-        type={cameraType}
-        flashMode={Camera.Constants.FlashMode.on}
-        onCameraReady={onCameraReady}
-        onMountError={(error) => {
-          console.log('cammera error', error);
-        }}
-      />
+      {isCameraOn && renderCamera()}
+      {!isCameraOn && renderImagePicker()}
 
       <View style={styles.container}>
         {isVideoRecording && renderVideoRecordIndicator()}
         {videoSource && renderVideoPlayer()}
         {videoAayush && renderVideoAayush()}
-        {isPreview && renderCancelPreviewButton()}
-        {isPreview && renderConfirmPreviewButton()}
+        {(isPreview || !isCameraOn) && renderCancelPreviewButton()}
+        {(isPreview || !isCameraOn) && renderConfirmPreviewButton()}
         {loadingTakePic && renderCircleProgressForConfirm()}
         {loadingSendPic && renderProgressBar()}
-        {!videoSource && !isPreview && renderCaptureControl()}
+        {!videoSource && !isPreview && isCameraOn && renderCaptureControl()}
+
         {isVisible && renderSelectModal()}
         {textModalIsVisible && renderTextModal()}
       </View>
