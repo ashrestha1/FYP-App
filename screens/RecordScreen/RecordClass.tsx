@@ -13,6 +13,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Font from 'expo-font';
 import * as Permissions from 'expo-permissions';
 import * as Icons from '../../components/Icons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const { width: DEVICE_WIDTH, height: DEVICE_HEIGHT } = Dimensions.get('window');
 const BACKGROUND_COLOR = '#EEEEEE';
@@ -374,43 +375,11 @@ export default class RecordClass extends React.Component<Props, State> {
           <View />
           <View style={styles.recordingContainer}>
             <View />
-            <TouchableHighlight
-              underlayColor={BACKGROUND_COLOR}
-              style={styles.wrapper}
-              onPress={this._onRecordPressed}
-              disabled={this.state.isLoading}
-            >
-              <Image style={styles.image} source={Icons.RECORD_BUTTON.module} />
-            </TouchableHighlight>
-            <View style={styles.recordingDataContainer}>
-              <View />
-              <Text
-                style={[styles.liveText, { fontFamily: 'cutive-mono-regular' }]}
-              >
-                {this.state.isRecording ? 'LIVE' : ''}
-              </Text>
-              <View style={styles.recordingDataRowContainer}>
-                <Image
-                  style={[
-                    styles.image,
-                    { opacity: this.state.isRecording ? 1.0 : 0.0 },
-                  ]}
-                  source={Icons.RECORDING.module}
-                />
-                <Text
-                  style={[
-                    styles.recordingTimestamp,
-                    {
-                      fontFamily: 'cutive-mono-regular',
-                      opacity: this.state.isRecording ? 1.0 : 0.0,
-                    },
-                  ]}
-                >
-                  {this._getRecordingTimestamp()}
-                </Text>
-              </View>
-              <View />
-            </View>
+            <Text>
+              {this.state.textValue}
+              {this.props.name}
+            </Text>
+
             <View />
           </View>
           <View />
@@ -534,6 +503,44 @@ export default class RecordClass extends React.Component<Props, State> {
               </Text>
             </TouchableHighlight>
           </View>
+          <TouchableHighlight
+            underlayColor={BACKGROUND_COLOR}
+            style={{ borderRadius: 400 }}
+            onPress={this._onRecordPressed}
+            disabled={this.state.isLoading}
+          >
+            <MaterialCommunityIcons
+              name="microphone-outline"
+              style={[
+                styles.microphoneIcon,
+                { color: this.state.isRecording ? 'red' : 'black' },
+              ]}
+            />
+          </TouchableHighlight>
+          <View style={styles.recordingDataContainer}>
+            <View />
+            <View style={styles.recordingDataRowContainer}>
+              <Image
+                style={[
+                  styles.image,
+                  { opacity: this.state.isRecording ? 1.0 : 0.0 },
+                ]}
+                source={Icons.RECORDING.module}
+              />
+              <Text
+                style={[
+                  styles.recordingTimestamp,
+                  {
+                    fontFamily: 'cutive-mono-regular',
+                    opacity: this.state.isRecording ? 1.0 : 0.0,
+                  },
+                ]}
+              >
+                {this._getRecordingTimestamp()}
+              </Text>
+            </View>
+            <View />
+          </View>
           <View />
         </View>
       </View>
@@ -576,10 +583,12 @@ const styles = StyleSheet.create({
     maxHeight: Icons.RECORD_BUTTON.height,
   },
   recordingDataContainer: {
-    flex: 1,
-    backgroundColor: 'red',
+    backgroundColor: 'green',
     flexDirection: 'column',
     alignItems: 'center',
+  },
+  microphoneIcon: {
+    fontSize: 80,
   },
   recordingDataRowContainer: {
     flex: 1,

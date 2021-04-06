@@ -17,6 +17,7 @@ import {
   KeyboardAvoidingView,
   Image,
 } from 'react-native';
+import Axios from 'axios';
 import { Camera } from 'expo-camera';
 import { Video } from 'expo-av';
 import { Header, Icon } from 'native-base';
@@ -33,34 +34,34 @@ const GenerateScreen = ({ navigation }) => {
   const [isVideoRecording, setIsVideoRecording] = useState(false);
   const [videoSource, setVideoSource] = useState(null);
   const [videoAayush, setVideoAayush] = useState(false);
+  const [isVideoPaused, setIsVideoPaused] = useState(true);
   const cameraRef = useRef();
   const [isVisible, setIsVisible] = useState(true);
   const [textModalIsVisible, setTextModalIsVisible] = useState(false);
+  const [textModalCancelButton, setTextModalCancelButton] = useState(false);
+  const [videoIsPaused, setVideoIsPaused] = useState(true);
   const [blurIntensity, setBlurIntensity] = useState(100);
   const [textBlurIntensity, setTextBlurIntensity] = useState(0);
-  const [image, setImage] = useState(null);
   const [imageSource, setImageSource] = useState(null);
   const [textEntered, setTextEntered] = useState(null);
   const [isHiddenConfirm, setIsHiddenConfirm] = React.useState('flex');
   const [isHiddenCancel, setIsHiddenCancel] = React.useState('flex');
   const [loadingTakePic, setLoadingTakePic] = useState(false);
   const [loadingSendPic, setLoadingSendPic] = useState(false);
-  const [videoEvaluation, setVideoEvaluation] = useState(
-    'https://desmondbucket.s3-ap-southeast-1.amazonaws.com/mykey.mp4'
-  );
+  const [videoEvaluation, setVideoEvaluation] = useState('');
   const [isCameraOn, setIsCameraOn] = useState(true);
+  const [models, setModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState('');
+  const [status, setStatus] = React.useState({});
 
-  const [models, setModels] = useState([
-    { title: 'Aayush Shrestha', NumOfSteps: 1000 },
-    { title: 'Umakant Bhatt', NumOfSteps: 1200 },
-    { title: 'Tony Sung', NumOfSteps: 1300 },
-  ]);
+  const videoOutput = useRef();
 
   useEffect(() => {
     (async () => {
       const { status } = await Camera.requestPermissionsAsync();
       setHasPermission(status === 'granted');
     })();
+    getModels();
   }, []);
 
   const onCameraReady = () => {
@@ -76,9 +77,6 @@ const GenerateScreen = ({ navigation }) => {
       if (source) {
         await cameraRef.current.pausePreview();
         setIsPreview(true);
-        postText();
-        console.log(videoEvaluation);
-        // uploadImage(source);
       }
     }
   };
@@ -94,9 +92,8 @@ const GenerateScreen = ({ navigation }) => {
 
     if (!result.cancelled) {
       const source = result.uri;
-      setImage(source);
+      setImageSource(source);
       setIsCameraOn(false);
-      uploadImage(source);
     }
   };
 
@@ -111,7 +108,6 @@ const GenerateScreen = ({ navigation }) => {
           const source = data.uri;
           if (source) {
             setIsPreview(true);
-            console.log('video source', source);
             setVideoSource(source);
           }
         }
@@ -121,15 +117,16 @@ const GenerateScreen = ({ navigation }) => {
     }
   };
   const getModels = () => {
-    return fetch('http://35.229.251.43/listVoiceModels')
-      .then((response) => response.json())
-      .then((responseJson) => {
-        console.log(responseJson);
+    return Axios.get('http://35.229.251.43/listVoiceModels')
+      .then((response) => {
+        setModels(response.data);
+        return response;
       })
       .catch((error) => {
         console.error(error);
       });
   };
+
   const stopVideoRecording = () => {
     if (cameraRef.current) {
       setIsPreview(false);
@@ -137,23 +134,36 @@ const GenerateScreen = ({ navigation }) => {
       cameraRef.current.stopRecording();
     }
   };
-  const sendTextButtonPushed = () => {
-    setTextModalIsVisible(false);
-    setTextBlurIntensity(0);
-    setIsHiddenConfirm('none');
 
+  const sendTextButtonPushed = () => {
+    postText();
+    setIsHiddenConfirm('none');
     setLoadingSendPic(true);
-    setTimeout(() => {
-      setLoadingSendPic(false);
-      setIsHiddenCancel('flex');
-      setVideoAayush(true);
-    }, 1200);
   };
   const cancelTextEnter = () => {
     setTextModalIsVisible(false);
+    setTextModalCancelButton(false);
     setTextBlurIntensity(0);
     setIsHiddenConfirm('flex');
     setIsHiddenCancel('flex');
+  };
+
+  const replayVideo = async () => {
+    if (videoOutput.current) {
+      await videoOutput.current.replayAsync();
+    }
+  };
+  const playOrPauseVideo = async () => {
+    if (videoOutput.current) {
+      console.log(status.durationMillis - status.positionMillis);
+
+      if (status.durationMillis - status.positionMillis == 0) {
+        await videoOutput.current.setPositionAsync(0);
+      }
+      status.isPlaying
+        ? await videoOutput.current.pauseAsync()
+        : await videoOutput.current.playAsync();
+    }
   };
 
   const switchCamera = () => {
@@ -168,9 +178,12 @@ const GenerateScreen = ({ navigation }) => {
   };
 
   const cancelPreview = async () => {
+    setIsHiddenConfirm('flex');
     setVideoAayush(false);
+    {
+      isCameraOn && (await cameraRef.current.resumePreview());
+    }
     setIsCameraOn(true);
-    await cameraRef.current.resumePreview();
     setIsPreview(false);
     setVideoSource(null);
   };
@@ -185,40 +198,83 @@ const GenerateScreen = ({ navigation }) => {
   );
 
   const uploadImage = (Img) => {
-    console.log(Img);
+    console.log('upload image');
+    //   const manipResult = await ImageManipulator.manipulate(
+    //     img,
+    //     [{ resize: { width: 250, height: 250 } }],
+    //     { format: 'jpg' }
+    // );
 
-    let localUri = Img;
-    let filename = localUri.split('/').pop();
-    console.log(filename);
+    // setImageSource(manipResult);
+
     const data = new FormData();
-    data.append('file', localUri);
-    data.append('filename', 'aayush-10.jpg');
-
-    fetch('http://35.229.251.43/upload-pic', {
-      method: 'POST',
-      body: data,
-    }).then((response) => {
-      console.log('succ');
-      console.log(typeof response);
+    let filename = Img.split('/').pop();
+    let match = /\.(\w+)$/.exec(filename);
+    let type = match ? `image/${match[1]}` : `image`;
+    data.append('file', {
+      uri: Img,
+      name: 'aayush-10.jpg',
+      type,
     });
+    // data.append('filename', 'aayush-10.jpg');
+
+    // return Axios.post('http://35.229.251.43/upload-pic', data, {
+    //   headers: {
+    //     'Content-Type': 'multipart/form-data',
+    //   },
+    // }).then((response) => {
+    //   console.log('hi', response.data);
+    //   console.log('bye', response);
+    //   return response.data;
+    // });
+
+    // fetch('http://35.229.251.43/upload-pic', {
+    //   method: 'POST',
+    //   body: data,
+    // }).then((response) => {
+    //   console.log(response);
+    // });
+    return Axios.post('http://35.229.251.43/upload-pic', data)
+      .catch((error) => console.log('error:', error))
+      .then((res) => {
+        return res;
+      });
   };
 
   const postText = () => {
-    console.log('text');
+    console.log('post text');
+    console.log('text', textEntered);
+    setVideoEvaluation('');
     const data = new FormData();
-    data.append('model', 'desmond-20');
-    data.append('text', 'Hi there yo');
+    data.append('model', selectedModel.item);
+    data.append('text', textEntered);
 
-    fetch('http://35.229.251.43/evaluate', {
-      method: 'POST',
-      body: data,
-    }).then((response) => {
-      console.log('succ', response.text());
-      setVideoEvaluation(
-        'https://desmondbucket.s3-ap-southeast-1.amazonaws.com/mykey.mp4'
-      );
-      console.log(videoEvaluation);
-    });
+    // fetch('http://35.229.251.43/evaluate', {
+    //   method: 'POST',
+    //   body: data,
+    // })
+    //   .then((response) => {
+    //     setVideoEvaluation(
+    //       'https://desmondbucket.s3-ap-southeast-1.amazonaws.com/mykey.mp4'
+    //     );
+    //   })
+    //   .then(() => {
+    //     console.log('replay');
+    //     videoOutput.current.replayAsync();
+    //   });
+
+    return Axios.post('http://35.229.251.43/evaluate', data)
+      .catch((error) => console.log('error:', error))
+      .then((res) => {
+        setLoadingSendPic(false);
+        setVideoAayush(true);
+        console.log('res', res);
+        setVideoEvaluation(
+          'https://desmondbucket.s3-ap-southeast-1.amazonaws.com/mykey.mp4'
+        );
+
+        return res;
+      });
   };
 
   const renderConfirmPreviewButton = () => (
@@ -251,9 +307,9 @@ const GenerateScreen = ({ navigation }) => {
     >
       <Progress.Bar
         indeterminate={true}
-        indeterminateAnimationDuration={12000}
+        indeterminateAnimationDuration={3000}
         width={300}
-        color={'#fff'}
+        color={'#00BFFF'}
         borderColor={'rgba(255, 255, 255, 0.1)'}
         height={10}
         borderRadius={10}
@@ -271,7 +327,7 @@ const GenerateScreen = ({ navigation }) => {
         width={10}
         fill={100}
         duration={3000}
-        tintColor="#75b800"
+        tintColor="#00BFFF"
         onAnimationComplete={() => console.log('onAnimationComplete')}
         backgroundColor="#3d5875"
       />
@@ -280,9 +336,12 @@ const GenerateScreen = ({ navigation }) => {
 
   const renderTextEnterModal = () => {
     setLoadingTakePic(true);
+    console.log('uploadactivate');
+    uploadImage(imageSource);
     setTimeout(() => {
       setLoadingTakePic(false);
       setTextModalIsVisible(true);
+      setTextModalCancelButton(true);
       setIsHiddenConfirm('none');
       setIsHiddenCancel('none');
     }, 3000);
@@ -291,9 +350,10 @@ const GenerateScreen = ({ navigation }) => {
   const renderVideoAayush = () => (
     <Video
       source={{
-        uri: 'https://desmondbucket.s3-ap-southeast-1.amazonaws.com/mykey.mp4',
+        uri: videoEvaluation,
       }}
-      shouldPlay={true}
+      ref={videoOutput}
+      onPlaybackStatusUpdate={(status) => setStatus(() => status)}
       style={[
         styles.media,
         {
@@ -319,7 +379,13 @@ const GenerateScreen = ({ navigation }) => {
   const renderCamera = () => (
     <Camera
       ref={cameraRef}
-      style={styles.container}
+      style={[
+        {
+          aspectRatio: 1,
+          bottom: '9%',
+        },
+      ]}
+      ratio={'1:1'}
       type={cameraType}
       flashMode={Camera.Constants.FlashMode.on}
       onCameraReady={onCameraReady}
@@ -330,7 +396,15 @@ const GenerateScreen = ({ navigation }) => {
   );
 
   const renderImagePicker = () => (
-    <Image style={styles.container} source={{ uri: image }} />
+    <Image
+      style={[
+        {
+          aspectRatio: 1,
+          bottom: '9%',
+        },
+      ]}
+      source={{ uri: imageSource }}
+    />
   );
 
   const renderSelectModal = () => (
@@ -348,12 +422,12 @@ const GenerateScreen = ({ navigation }) => {
                 <View style={styles.cardContent}>
                   <TouchableOpacity
                     onPress={() => {
-                      getModels();
                       setIsVisible(!isVisible);
                       setBlurIntensity(0);
+                      setSelectedModel({ item });
                     }}
                   >
-                    <Text style={styles.modelName}>{item.title}</Text>
+                    <Text style={styles.modelName}>{item}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -379,6 +453,9 @@ const GenerateScreen = ({ navigation }) => {
           <View style={styles.modalOverlay}>
             {renderSendTextButton()}
             {renderCancelTextButton()}
+            {videoAayush && renderReplayButton()}
+            {videoAayush && downloadButton()}
+            {videoAayush && renderPlayOrPauseButton()}
           </View>
         </TouchableWithoutFeedback>
         <KeyboardAvoidingView
@@ -432,6 +509,36 @@ const GenerateScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
+  const renderReplayButton = () => (
+    <TouchableOpacity onPress={replayVideo} style={styles.replayButton}>
+      <MaterialCommunityIcons
+        name="replay"
+        style={{ color: 'white', fontSize: 30, alignSelf: 'center' }}
+      />
+    </TouchableOpacity>
+  );
+
+  const renderPlayOrPauseButton = () => (
+    <TouchableOpacity
+      onPress={playOrPauseVideo}
+      style={styles.playOrPauseButton}
+    >
+      <Icon
+        name={status.isPlaying ? 'pause' : 'play'}
+        style={{ color: 'white', fontSize: 30, alignSelf: 'center' }}
+      />
+    </TouchableOpacity>
+  );
+
+  const downloadButton = () => (
+    <TouchableOpacity style={styles.downloadButton}>
+      <MaterialCommunityIcons
+        name="download"
+        style={{ color: 'white', fontSize: 30, alignSelf: 'center' }}
+      />
+    </TouchableOpacity>
+  );
+
   const renderVideoRecordIndicator = () => (
     <View style={styles.recordIndicatorContainer}>
       <View style={styles.recordDot} />
@@ -469,7 +576,7 @@ const GenerateScreen = ({ navigation }) => {
           />
 
           <View>
-            <TouchableOpacity style={styles.button}>
+            <TouchableOpacity>
               <MaterialCommunityIcons
                 name="flash"
                 style={{
@@ -533,7 +640,12 @@ const GenerateScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { justifyContent: 'space-evenly', backgroundColor: 'black' },
+      ]}
+    >
       {isCameraOn && renderCamera()}
       {!isCameraOn && renderImagePicker()}
 
@@ -546,7 +658,6 @@ const GenerateScreen = ({ navigation }) => {
         {loadingTakePic && renderCircleProgressForConfirm()}
         {loadingSendPic && renderProgressBar()}
         {!videoSource && !isPreview && isCameraOn && renderCaptureControl()}
-
         {isVisible && renderSelectModal()}
         {textModalIsVisible && renderTextModal()}
       </View>
@@ -617,6 +728,35 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     left: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    padding: 5,
+    backgroundColor: 'rgba(1,1,1,0.5)',
+    borderRadius: 70,
+  },
+  replayButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 100,
+    alignSelf: 'center',
+    padding: 5,
+    backgroundColor: 'rgba(1,1,1,0.5)',
+    borderRadius: 70,
+  },
+
+  downloadButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 100,
+    alignSelf: 'center',
+    padding: 5,
+    backgroundColor: 'rgba(1,1,1,0.5)',
+    borderRadius: 70,
+  },
+  playOrPauseButton: {
+    position: 'absolute',
+    bottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',

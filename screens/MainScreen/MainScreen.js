@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, ImageBackground, Pressable } from 'react-native';
+import { View, Text, ImageBackground, Pressable, Image } from 'react-native';
 import styles from './styles';
+import MynahIcon from '../../assets/icons/myna.png';
 const MainScreen = ({ navigation }) => {
   return (
     <View style={styles.choiceContainer}>
@@ -11,6 +12,18 @@ const MainScreen = ({ navigation }) => {
         <Text style={styles.subtitles}>
           An assistive tool for the speech impaired
         </Text>
+      </View>
+
+      <View>
+        <Image
+          source={MynahIcon}
+          style={{
+            width: 300,
+            height: 300,
+            alignSelf: 'center',
+            marginTop: 15,
+          }}
+        />
       </View>
 
       <View style={styles.buttonContainer}>
