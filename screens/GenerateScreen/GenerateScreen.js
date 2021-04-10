@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import * as Progress from 'react-native-progress';
 import * as ImagePicker from 'expo-image-picker';
+
 import {
   View,
   Text,
@@ -20,7 +21,7 @@ import {
 import Axios from 'axios';
 import { Camera } from 'expo-camera';
 import { Video } from 'expo-av';
-import { Header, Icon } from 'native-base';
+import { Header, Icon, Row } from 'native-base';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BlurView } from 'expo-blur';
 const WINDOW_HEIGHT = Dimensions.get('window').height;
@@ -53,7 +54,8 @@ const GenerateScreen = ({ navigation }) => {
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState('');
   const [status, setStatus] = React.useState({});
-
+  const [audioChecked, setAudioChecked] = useState(false);
+  const [videoChecked, setVideoChecked] = useState(false);
   const videoOutput = useRef();
 
   useEffect(() => {
@@ -237,6 +239,12 @@ const GenerateScreen = ({ navigation }) => {
     return Axios.post('http://35.229.251.43/upload-pic', data)
       .catch((error) => console.log('error:', error))
       .then((res) => {
+        console.log(res);
+        setLoadingTakePic(false);
+        setTextModalIsVisible(true);
+        setTextModalCancelButton(true);
+        setIsHiddenConfirm('none');
+        setIsHiddenCancel('none');
         return res;
       });
   };
@@ -269,6 +277,7 @@ const GenerateScreen = ({ navigation }) => {
         setLoadingSendPic(false);
         setVideoAayush(true);
         console.log('res', res);
+        console.log(selectedModel.item);
         setVideoEvaluation(
           'https://desmondbucket.s3-ap-southeast-1.amazonaws.com/mykey.mp4'
         );
@@ -326,7 +335,7 @@ const GenerateScreen = ({ navigation }) => {
         size={100}
         width={10}
         fill={100}
-        duration={3000}
+        duration={5000}
         tintColor="#00BFFF"
         onAnimationComplete={() => console.log('onAnimationComplete')}
         backgroundColor="#3d5875"
@@ -338,13 +347,6 @@ const GenerateScreen = ({ navigation }) => {
     setLoadingTakePic(true);
     console.log('uploadactivate');
     uploadImage(imageSource);
-    setTimeout(() => {
-      setLoadingTakePic(false);
-      setTextModalIsVisible(true);
-      setTextModalCancelButton(true);
-      setIsHiddenConfirm('none');
-      setIsHiddenCancel('none');
-    }, 3000);
   };
 
   const renderVideoAayush = () => (
@@ -434,6 +436,72 @@ const GenerateScreen = ({ navigation }) => {
             )}
             keyExtractor={(item, index) => index.toString()}
           />
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 5,
+              flexDirection: 'row',
+              justifyContent: 'space-around',
+              width: '100%',
+              alignSelf: 'center',
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => {
+                audioChecked ? setAudioChecked(false) : setAudioChecked(true);
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-around',
+                }}
+              >
+                <Text style={{ alignSelf: 'center' }}>Audio Only</Text>
+                <MaterialCommunityIcons
+                  name={
+                    audioChecked
+                      ? 'checkbox-marked-circle-outline'
+                      : 'checkbox-blank-circle-outline'
+                  }
+                  style={{
+                    color: 'black',
+                    fontSize: 30,
+                    alignSelf: 'center',
+                    marginLeft: 10,
+                  }}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                videoChecked ? setVideoChecked(false) : setVideoChecked(true);
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-around',
+                }}
+              >
+                <Text style={{ alignSelf: 'center' }}>Video</Text>
+                <MaterialCommunityIcons
+                  name={
+                    videoChecked
+                      ? 'checkbox-marked-circle-outline'
+                      : 'checkbox-blank-circle-outline'
+                  }
+                  style={{
+                    color: 'black',
+                    fontSize: 30,
+                    alignSelf: 'center',
+                    marginLeft: 10,
+                  }}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </BlurView>
