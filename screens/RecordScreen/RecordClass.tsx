@@ -2,25 +2,26 @@ import React from 'react';
 import {
   Dimensions,
   Image,
-  Slider,
+  TouchableOpacity,
   StyleSheet,
   Text,
   TouchableHighlight,
   View,
 } from 'react-native';
+// import Slider from '@react-native-community/slider';
+import Slider from 'react-native-slider';
+import { Icon } from 'native-base';
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import * as Font from 'expo-font';
 import * as Permissions from 'expo-permissions';
 import * as Icons from '../../components/Icons';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+
+import { ProgressBar } from 'react-native-paper';
 
 const { width: DEVICE_WIDTH, height: DEVICE_HEIGHT } = Dimensions.get('window');
-const BACKGROUND_COLOR = '#EEEEEE';
+const BACKGROUND_COLOR = 'transparent';
 const LIVE_COLOR = '#FF0000';
-const DISABLED_OPACITY = 0.5;
-const RATE_SCALE = 3.0;
-var random = 'hi there';
 
 type Props = {
   name: string;
@@ -73,7 +74,7 @@ export default class RecordClass extends React.Component<Props, State> {
       shouldCorrectPitch: false,
       volume: 1.0,
       rate: 1.0,
-      textValue: 'sentence 1',
+      textValue: 'He loved eating his bananas in hot dog buns.',
     };
     this.recordingSettings = Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY;
 
@@ -123,9 +124,6 @@ export default class RecordClass extends React.Component<Props, State> {
         soundPosition: null,
         isPlaybackAllowed: false,
       });
-      if (status.error) {
-        console.log(`FATAL PLAYER ERROR: ${status.error}`);
-      }
     }
   };
 
@@ -332,6 +330,27 @@ export default class RecordClass extends React.Component<Props, State> {
     return '';
   }
 
+  private _getPlaybackTimestampPosition() {
+    if (
+      this.sound != null &&
+      this.state.soundPosition != null &&
+      this.state.soundDuration != null
+    ) {
+      return `${this._getMMSSFromMillis(this.state.soundPosition)}`;
+    }
+    return '';
+  }
+  private _getPlaybackTimestampDuration() {
+    if (
+      this.sound != null &&
+      this.state.soundPosition != null &&
+      this.state.soundDuration != null
+    ) {
+      return `${this._getMMSSFromMillis(this.state.soundDuration)}`;
+    }
+    return '';
+  }
+
   private _getRecordingTimestamp() {
     if (this.state.recordingDuration != null) {
       return `${this._getMMSSFromMillis(this.state.recordingDuration)}`;
@@ -363,22 +382,32 @@ export default class RecordClass extends React.Component<Props, State> {
     }
 
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { padding: 15 }]}>
         <View
-          style={[
-            styles.halfScreenContainer,
-            {
-              opacity: this.state.isLoading ? DISABLED_OPACITY : 1.0,
-            },
-          ]}
+          style={[styles.halfScreenContainer, { backgroundColor: 'white' }]}
         >
+          <View
+            style={{ alignSelf: 'flex-start', marginLeft: 10, marginTop: 20 }}
+          >
+            <TouchableOpacity>
+              <Icon name="return-up-back" style={{ color: 'black' }} />
+            </TouchableOpacity>
+          </View>
           <View />
           <View style={styles.recordingContainer}>
             <View />
-            <Text>
-              {this.state.textValue}
-              {this.props.name}
-            </Text>
+
+            <View
+              style={{
+                justifyContent: 'center',
+                marginTop: -30,
+                flex: 1,
+              }}
+            >
+              <Text style={{ fontSize: 21, fontWeight: '500' }}>
+                {this.state.textValue}
+              </Text>
+            </View>
 
             <View />
           </View>
@@ -389,149 +418,58 @@ export default class RecordClass extends React.Component<Props, State> {
           style={[
             styles.halfScreenContainer,
             {
-              opacity:
-                !this.state.isPlaybackAllowed || this.state.isLoading
-                  ? DISABLED_OPACITY
-                  : 1.0,
+              backgroundColor: '#F8F8F8',
+              borderTopColor: '#E0E0E0',
+              borderTopWidth: 2,
+              padding: 20,
             },
           ]}
         >
-          <Text>
-            {this.state.textValue}
-            {this.props.name}
-          </Text>
+          <View
+            style={{
+              marginBottom: 5,
+              marginTop: 20,
+              flexDirection: 'row',
+              width: '100%',
+              alignContent: 'space-between',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Text style={{ fontWeight: '500' }}>Sentences recorded:</Text>
+            <Text style={{ fontWeight: '500' }}>10%</Text>
+          </View>
+          <ProgressBar
+            progress={0.1}
+            color={'#00BFFF'}
+            style={{ width: 300, backgroundColor: '#DCDCDC', marginBottom: 40 }}
+          />
 
           <View />
-          <View style={styles.playbackContainer}>
-            <Slider
-              style={styles.playbackSlider}
-              trackImage={Icons.TRACK_1.module}
-              thumbImage={Icons.THUMB_1.module}
-              value={this._getSeekSliderPosition()}
-              onValueChange={this._onSeekSliderValueChange}
-              onSlidingComplete={this._onSeekSliderSlidingComplete}
-              disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
-            />
-            <Text
-              style={[
-                styles.playbackTimestamp,
-                { fontFamily: 'cutive-mono-regular' },
-              ]}
-            >
-              {this._getPlaybackTimestamp()}
-            </Text>
-          </View>
-          <View
-            style={[styles.buttonsContainerBase, styles.buttonsContainerTopRow]}
-          >
-            <View style={styles.volumeContainer}>
-              <TouchableHighlight
-                underlayColor={BACKGROUND_COLOR}
-                style={styles.wrapper}
-                onPress={this._onMutePressed}
-                disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
-              >
-                <Image
-                  style={styles.image}
-                  source={
-                    this.state.muted
-                      ? Icons.MUTED_BUTTON.module
-                      : Icons.UNMUTED_BUTTON.module
-                  }
-                />
-              </TouchableHighlight>
-              <Slider
-                style={styles.volumeSlider}
-                trackImage={Icons.TRACK_1.module}
-                thumbImage={Icons.THUMB_2.module}
-                value={1}
-                onValueChange={this._onVolumeSliderValueChange}
-                disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
-              />
-            </View>
-            <View style={styles.playStopContainer}>
-              <TouchableHighlight
-                underlayColor={BACKGROUND_COLOR}
-                style={styles.wrapper}
-                onPress={this._onPlayPausePressed}
-                disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
-              >
-                <Image
-                  style={styles.image}
-                  source={
-                    this.state.isPlaying
-                      ? Icons.PAUSE_BUTTON.module
-                      : Icons.PLAY_BUTTON.module
-                  }
-                />
-              </TouchableHighlight>
-              <TouchableHighlight
-                underlayColor={BACKGROUND_COLOR}
-                style={styles.wrapper}
-                onPress={this._onStopPressed}
-                disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
-              >
-                <Image style={styles.image} source={Icons.STOP_BUTTON.module} />
-              </TouchableHighlight>
-            </View>
-            <View />
-          </View>
-          <View
-            style={[
-              styles.buttonsContainerBase,
-              styles.buttonsContainerBottomRow,
-            ]}
-          >
-            <Text style={styles.timestamp}> {this.state.textValue}</Text>
-
-            <TouchableHighlight
-              underlayColor={BACKGROUND_COLOR}
-              style={styles.wrapper}
-              onPress={this.sentenceChange}
-            >
-              <Text style={[{ fontFamily: 'cutive-mono-regular' }]}>
-                PC: {this.state.shouldCorrectPitch ? 'yes' : 'no'}
-              </Text>
-            </TouchableHighlight>
-            <TouchableHighlight
-              underlayColor={BACKGROUND_COLOR}
-              style={styles.wrapper}
-              disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
-            >
-              <Text style={[{ fontFamily: 'cutive-mono-regular' }]}>
-                PC: {this.state.shouldCorrectPitch ? 'yes' : 'no'}
-              </Text>
-            </TouchableHighlight>
-          </View>
           <TouchableHighlight
             underlayColor={BACKGROUND_COLOR}
             style={{ borderRadius: 400 }}
             onPress={this._onRecordPressed}
             disabled={this.state.isLoading}
           >
-            <MaterialCommunityIcons
-              name="microphone-outline"
+            <Icon
+              name={
+                this.state.isRecording ? 'ios-mic-sharp' : 'ios-mic-outline'
+              }
               style={[
                 styles.microphoneIcon,
-                { color: this.state.isRecording ? 'red' : 'black' },
+                { color: this.state.isRecording ? '#ff3232' : 'black' },
               ]}
             />
           </TouchableHighlight>
           <View style={styles.recordingDataContainer}>
             <View />
             <View style={styles.recordingDataRowContainer}>
-              <Image
-                style={[
-                  styles.image,
-                  { opacity: this.state.isRecording ? 1.0 : 0.0 },
-                ]}
-                source={Icons.RECORDING.module}
-              />
               <Text
                 style={[
                   styles.recordingTimestamp,
                   {
-                    fontFamily: 'cutive-mono-regular',
+                    fontWeight: '500',
+                    fontSize: 10,
                     opacity: this.state.isRecording ? 1.0 : 0.0,
                   },
                 ]}
@@ -541,6 +479,71 @@ export default class RecordClass extends React.Component<Props, State> {
             </View>
             <View />
           </View>
+          <View style={styles.playbackContainer}>
+            <Slider
+              style={styles.playbackSlider}
+              thumbStyle={{
+                width: 10,
+                height: 10,
+                backgroundColor: '#31a4db',
+                borderRadius: 10 / 2,
+                shadowColor: '#31a4db',
+                shadowOffset: { width: 0, height: 0 },
+                shadowRadius: 2,
+                shadowOpacity: 1,
+              }}
+              minimumTrackTintColor="#31a4db"
+              maximumTrackTintColor="#DCDCDC"
+              value={this._getSeekSliderPosition()}
+              onValueChange={this._onSeekSliderValueChange}
+              onSlidingComplete={this._onSeekSliderSlidingComplete}
+              disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
+            />
+
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                width: '100%',
+              }}
+            >
+              <Text
+                style={[
+                  styles.playbackTimestamp,
+                  { fontWeight: '500', fontSize: 10 },
+                ]}
+              >
+                {this._getPlaybackTimestampPosition()}
+              </Text>
+              <Text
+                style={[
+                  styles.playbackTimestamp,
+                  { fontWeight: '500', fontSize: 10 },
+                ]}
+              >
+                {this._getPlaybackTimestampDuration()}
+              </Text>
+            </View>
+          </View>
+          <View
+            style={[styles.buttonsContainerBase, styles.buttonsContainerTopRow]}
+          >
+            <View style={styles.playStopContainer}>
+              <TouchableHighlight
+                underlayColor={BACKGROUND_COLOR}
+                style={styles.wrapper}
+                onPress={this._onPlayPausePressed}
+                disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
+              >
+                <Icon
+                  style={styles.image}
+                  name={this.state.isPlaying ? 'pause-sharp' : 'play-sharp'}
+                />
+              </TouchableHighlight>
+            </View>
+            <View />
+          </View>
+
           <View />
         </View>
       </View>
@@ -578,12 +581,12 @@ const styles = StyleSheet.create({
   recordingContainer: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     alignSelf: 'stretch',
     minHeight: Icons.RECORD_BUTTON.height,
     maxHeight: Icons.RECORD_BUTTON.height,
   },
   recordingDataContainer: {
-    backgroundColor: 'green',
     flexDirection: 'column',
     alignItems: 'center',
   },
@@ -600,7 +603,7 @@ const styles = StyleSheet.create({
   },
   playbackContainer: {
     flex: 0,
-    backgroundColor: 'red',
+    marginTop: 0,
     flexDirection: 'column',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -610,17 +613,16 @@ const styles = StyleSheet.create({
   },
   playbackSlider: {
     alignSelf: 'stretch',
+    height: 30,
   },
   liveText: {
     color: LIVE_COLOR,
   },
-  recordingTimestamp: {
-    paddingLeft: 20,
-  },
+  recordingTimestamp: {},
   playbackTimestamp: {
     textAlign: 'right',
     alignSelf: 'stretch',
-    paddingRight: 20,
+    marginTop: -4,
   },
   image: {
     backgroundColor: BACKGROUND_COLOR,
@@ -633,20 +635,18 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   buttonsContainerTopRow: {
     maxHeight: Icons.MUTED_BUTTON.height,
     alignSelf: 'stretch',
-    paddingRight: 20,
   },
   playStopContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    minWidth: ((Icons.PLAY_BUTTON.width + Icons.STOP_BUTTON.width) * 3.0) / 2.0,
-    maxWidth: ((Icons.PLAY_BUTTON.width + Icons.STOP_BUTTON.width) * 3.0) / 2.0,
+    alignContent: 'center',
+    justifyContent: 'center',
   },
   volumeContainer: {
     flex: 1,

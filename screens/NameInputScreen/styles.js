@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
   },
   titles: {
     width: '100%',
-    marginTop: '40%',
+    marginTop: '5%',
     alignItems: 'center',
   },
   title: {
@@ -20,13 +20,14 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   input: {
-    borderBottomWidth: 0.3,
-    borderColor: '#777',
     padding: 8,
     margin: 10,
     marginTop: '5%',
     width: '70%',
     alignContent: 'center',
+    fontSize: 12,
+    fontWeight: '500',
+    textTransform: 'uppercase',
   },
   subtitle: {
     fontSize: 16,
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 12,
-    fontWeight: '200',
+    fontWeight: '500',
     textTransform: 'uppercase',
   },
 });
