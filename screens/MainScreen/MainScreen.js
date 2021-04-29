@@ -9,9 +9,7 @@ const MainScreen = ({ navigation }) => {
 
       <View style={styles.titles}>
         <Text style={styles.title}>Mynah</Text>
-        <Text style={styles.subtitles}>
-          An assistive tool for the speech impaired
-        </Text>
+        <Text style={styles.subtitles}>Your personal virtual chatbot</Text>
       </View>
 
       <View>

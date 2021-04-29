@@ -7,6 +7,7 @@ import {
   Text,
   TouchableHighlight,
   View,
+  Modal,
 } from 'react-native';
 // import Slider from '@react-native-community/slider';
 import Slider from 'react-native-slider';
@@ -16,8 +17,9 @@ import * as FileSystem from 'expo-file-system';
 import * as Font from 'expo-font';
 import * as Permissions from 'expo-permissions';
 import * as Icons from '../../components/Icons';
-
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ProgressBar } from 'react-native-paper';
+import { BlurView } from 'expo-blur';
 
 const { width: DEVICE_WIDTH, height: DEVICE_HEIGHT } = Dimensions.get('window');
 const BACKGROUND_COLOR = 'transparent';
@@ -25,6 +27,7 @@ const LIVE_COLOR = '#FF0000';
 
 type Props = {
   name: string;
+  navigation: any;
 };
 
 type State = {
@@ -42,7 +45,9 @@ type State = {
   shouldCorrectPitch: boolean;
   volume: number;
   rate: number;
-  textValue: string;
+  textArr: Array<String>;
+  currSentence: number;
+  modalOn: boolean;
 };
 
 export default class RecordClass extends React.Component<Props, State> {
@@ -74,7 +79,20 @@ export default class RecordClass extends React.Component<Props, State> {
       shouldCorrectPitch: false,
       volume: 1.0,
       rate: 1.0,
-      textValue: 'He loved eating his bananas in hot dog buns.',
+      textArr: [
+        'He loved eating his bananas in hot dog buns',
+        'The beach was crowded with snow leopards',
+        'Peanut butter and jelly caused the elderly lady to think about her past',
+        'Waffles are always better without fire ants and fleas',
+        'I love bacon, beer, birds, and baboons',
+        'A quiet house is nice until you are ordered to stay in it for months',
+        'It was a slippery slope and he was willing to slide all the way to the deepest depths',
+        'He strives to keep the best lawn in the neighborhood',
+        'I would be delighted if the sea were full of cucumber juice',
+        'She had some amazing news to share but nobody to share it with',
+      ],
+      currSentence: 9,
+      modalOn: false,
     };
     this.recordingSettings = Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY;
 
@@ -250,14 +268,26 @@ export default class RecordClass extends React.Component<Props, State> {
     }
   };
 
-  private _onStopPressed = () => {
-    if (this.sound != null) {
-      this.sound.stopAsync();
-    }
+  private _goBack = () => {
+    this.props.navigation.navigate('Main');
   };
 
-  private sentenceChange = () => {
-    this.setState({ textValue: 'sentence2' });
+  private _handleNext = () => {
+    if (this.recording !== null) {
+      this.recording.setOnRecordingStatusUpdate(null);
+      this.recording = null;
+    }
+
+    if (this.sound != null) {
+      this.sound.stopAsync();
+      this.sound.unloadAsync();
+      this.sound.setOnPlaybackStatusUpdate(null);
+      this.sound = null;
+    }
+    this.setState({ currSentence: this.state.currSentence + 1 });
+    if (this.state.currSentence == 9) {
+      this.setState({ modalOn: true });
+    }
   };
 
   private _onMutePressed = () => {
@@ -389,7 +419,7 @@ export default class RecordClass extends React.Component<Props, State> {
           <View
             style={{ alignSelf: 'flex-start', marginLeft: 10, marginTop: 20 }}
           >
-            <TouchableOpacity>
+            <TouchableOpacity onPress={this._goBack}>
               <Icon name="return-up-back" style={{ color: 'black' }} />
             </TouchableOpacity>
           </View>
@@ -405,7 +435,7 @@ export default class RecordClass extends React.Component<Props, State> {
               }}
             >
               <Text style={{ fontSize: 21, fontWeight: '500' }}>
-                {this.state.textValue}
+                {this.state.textArr[this.state.currSentence]}
               </Text>
             </View>
 
@@ -436,10 +466,12 @@ export default class RecordClass extends React.Component<Props, State> {
             }}
           >
             <Text style={{ fontWeight: '500' }}>Sentences recorded:</Text>
-            <Text style={{ fontWeight: '500' }}>10%</Text>
+            <Text style={{ fontWeight: '500' }}>
+              {(this.state.currSentence / 10) * 100}%
+            </Text>
           </View>
           <ProgressBar
-            progress={0.1}
+            progress={this.state.currSentence / 10}
             color={'#00BFFF'}
             style={{ width: 300, backgroundColor: '#DCDCDC', marginBottom: 40 }}
           />
@@ -529,8 +561,7 @@ export default class RecordClass extends React.Component<Props, State> {
             style={[styles.buttonsContainerBase, styles.buttonsContainerTopRow]}
           >
             <View style={styles.playStopContainer}>
-              <TouchableHighlight
-                underlayColor={BACKGROUND_COLOR}
+              <TouchableOpacity
                 style={styles.wrapper}
                 onPress={this._onPlayPausePressed}
                 disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
@@ -539,13 +570,79 @@ export default class RecordClass extends React.Component<Props, State> {
                   style={styles.image}
                   name={this.state.isPlaying ? 'pause-sharp' : 'play-sharp'}
                 />
-              </TouchableHighlight>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.nextButton}
+                onPress={this._handleNext}
+                disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
+              >
+                <MaterialCommunityIcons
+                  style={[styles.image, { fontSize: 30 }]}
+                  name={
+                    this.sound != null
+                      ? 'comment-arrow-right-outline'
+                      : 'comment-arrow-right'
+                  }
+                />
+              </TouchableOpacity>
             </View>
             <View />
           </View>
 
           <View />
         </View>
+        {this.state.modalOn && (
+          <BlurView
+            intensity={95}
+            style={[
+              StyleSheet.absoluteFill,
+              styles.nonBlurredContent,
+              { borderRadius: 20 },
+            ]}
+          >
+            <Modal
+              animationType={'slide'}
+              transparent={true}
+              visible={this.state.modalOn}
+            >
+              <View style={styles.modal}>
+                <Text style={styles.modalTitle}>
+                  Please wait until the model is ready...
+                </Text>
+                <TouchableOpacity
+                  onPress={this._goBack}
+                  style={{
+                    alignSelf: 'center',
+                    justifyContent: 'flex-end',
+                    flex: 1,
+                  }}
+                >
+                  <View
+                    style={{ flexDirection: 'row', justifyContent: 'center' }}
+                  >
+                    <Text
+                      style={{
+                        textAlign: 'center',
+                        fontWeight: '400',
+                        fontSize: 15,
+                      }}
+                    >
+                      Main Screen
+                    </Text>
+                    <Icon
+                      name="return-up-back"
+                      style={{
+                        color: 'black',
+                        fontSize: 20,
+                        marginLeft: 10,
+                      }}
+                    />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </Modal>
+          </BlurView>
+        )}
       </View>
     );
   }
@@ -555,6 +652,40 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignSelf: 'stretch',
     backgroundColor: BACKGROUND_COLOR,
+  },
+
+  nonBlurredContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  modal: {
+    flex: 1,
+    margin: 270,
+    width: 350,
+    backgroundColor: '#F5F5F5',
+    paddingVertical: 30,
+    justifyContent: 'center',
+    alignSelf: 'center',
+    borderRadius: 4,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalTitle: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  nextButton: {
+    position: 'absolute',
+    right: 3,
   },
   container: {
     flex: 1,

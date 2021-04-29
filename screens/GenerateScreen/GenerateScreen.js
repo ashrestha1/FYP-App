@@ -279,7 +279,7 @@ const GenerateScreen = ({ navigation }) => {
         console.log('res', res);
         console.log(selectedModel.item);
         setVideoEvaluation(
-          'https://desmondbucket.s3-ap-southeast-1.amazonaws.com/mykey.mp4'
+          'https://fyp2021.s3-ap-northeast-1.amazonaws.com/mykey.mp4'
         );
 
         return res;

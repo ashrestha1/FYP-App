@@ -8,7 +8,7 @@ const RecordScreen = ({ navigation, route }) => {
 
   return (
     <View>
-      <RecordClass name={name} />
+      <RecordClass name={name} navigation={navigation} />
     </View>
   );
 };
