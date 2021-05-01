@@ -20,6 +20,7 @@ import * as Icons from '../../components/Icons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ProgressBar } from 'react-native-paper';
 import { BlurView } from 'expo-blur';
+import Axios from 'axios';
 
 const { width: DEVICE_WIDTH, height: DEVICE_HEIGHT } = Dimensions.get('window');
 const BACKGROUND_COLOR = 'transparent';
@@ -48,6 +49,7 @@ type State = {
   textArr: Array<String>;
   currSentence: number;
   modalOn: boolean;
+  currAudio: String;
 };
 
 export default class RecordClass extends React.Component<Props, State> {
@@ -91,8 +93,9 @@ export default class RecordClass extends React.Component<Props, State> {
         'I would be delighted if the sea were full of cucumber juice',
         'She had some amazing news to share but nobody to share it with',
       ],
-      currSentence: 9,
+      currSentence: 0,
       modalOn: false,
+      currAudio: '',
     };
     this.recordingSettings = Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY;
 
@@ -225,6 +228,10 @@ export default class RecordClass extends React.Component<Props, State> {
 
     console.log(info.uri);
     console.log(`FILE INFO: ${JSON.stringify(info)}`);
+    this.setState({
+      currAudio: info.uri,
+    });
+
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
@@ -284,10 +291,25 @@ export default class RecordClass extends React.Component<Props, State> {
       this.sound.setOnPlaybackStatusUpdate(null);
       this.sound = null;
     }
+
+    const data = new FormData();
+    data.append('file', this.state.currAudio);
+
     this.setState({ currSentence: this.state.currSentence + 1 });
     if (this.state.currSentence == 9) {
-      this.setState({ modalOn: true });
+      return Axios.post('http://35.229.251.43/updateData', data)
+        .catch((error) => console.log('error:', error))
+        .then((res) => {
+          this.setState({ modalOn: true });
+          return res;
+        });
     }
+
+    return Axios.post('http://35.229.251.43/updateData', data)
+      .catch((error) => console.log('error:', error))
+      .then((res) => {
+        console.log(res);
+      });
   };
 
   private _onMutePressed = () => {
